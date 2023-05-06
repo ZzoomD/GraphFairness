@@ -8,11 +8,13 @@ import scipy.sparse as sp
 from .utils import *
 from torch_geometric.utils import dropout_adj, convert
 from torch_sparse import SparseTensor
+import torch.nn as nn
 
 
 class FairDataset:
-    def __init__(self, dataset):
+    def __init__(self, dataset, device):
         self.dataset = dataset
+        self.device = device
 
     @staticmethod
     def adj2edge_index(adj, fea_num):
@@ -81,7 +83,7 @@ class FairDataset:
             seed = 20
             path = "/home/yczhu/Dataset/pokec/"
             val_idx = False
-            adj, features, labels, idx_train, idx_val, idx_test, sens, idx_sens_train = load_pokec(self.dataset,
+            adj, features, labels, idx_train, idx_val, idx_test, sens, idx_sens_train = load_pokec(dataset,
                                                                                                    sens_attr,
                                                                                                    predict_attr,
                                                                                                    path=path,
@@ -101,7 +103,7 @@ class FairDataset:
             seed = 20
             path = "/home/yczhu/Dataset/pokec/"
             val_idx = False
-            adj, features, labels, idx_train, idx_val, idx_test, sens, idx_sens_train = load_pokec(self.dataset,
+            adj, features, labels, idx_train, idx_val, idx_test, sens, idx_sens_train = load_pokec(dataset,
                                                                                                    sens_attr,
                                                                                                    predict_attr,
                                                                                                    path=path,
@@ -121,7 +123,7 @@ class FairDataset:
             seed = 20
             path = "/home/yczhu/Dataset/NBA/"
             val_idx = True
-            adj, features, labels, idx_train, idx_val, idx_test, sens, idx_sens_train = load_pokec(self.dataset,
+            adj, features, labels, idx_train, idx_val, idx_test, sens, idx_sens_train = load_pokec(dataset,
                                                                                                    sens_attr,
                                                                                                    predict_attr,
                                                                                                    path=path,
@@ -139,9 +141,11 @@ class FairDataset:
             exit(0)
 
         edge_index, edge_index_spar = FairDataset.adj2edge_index(adj=adj, fea_num=features.shape[0])
+        edge_index_spar = edge_index_spar.to(self.device)
+        features = features.to(self.device)
+        labels = labels.to(self.device)
         self.edge_index, self.features, self.labels, self.idx_train, self.idx_val, self.idx_test, self.sens = \
             edge_index_spar, features, labels, idx_train, idx_val, idx_test, sens
-
 
 
 def load_pokec(dataset, sens_attr, predict_attr, path="/home/yczhu/Dataset/pokec/", label_number=1000, sens_number=500,
