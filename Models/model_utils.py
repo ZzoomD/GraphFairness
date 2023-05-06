@@ -59,5 +59,6 @@ class BuildModel:
             optimizer = optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
             model = model.to(self.device)
         else:
-            raise RuntimeError("Invalid model name")
+            # raise RuntimeError("Invalid model name")
+            raise NotImplementedError("Invalid model name")
         return model, optimizer
