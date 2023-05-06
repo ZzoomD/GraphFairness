@@ -94,8 +94,8 @@ def run(args):
     Build model and optimizer
     """
     # constructing model and optimizer
-    model, optimizer = build_model(args)
-    model = model.to(args.device)
+    model_builder = BuildModel(args, args.device)
+    model, optimizer = model_builder.build()
 
     """
     Train model (Teacher model and Student model)
@@ -103,8 +103,8 @@ def run(args):
     # training vanilla model (for synthetic teacher)
     weight_path = f'./Weights/{args.model}_vanilla.pt'
     criterion = torch.nn.BCEWithLogitsLoss()
-    train_vanilla(model, optimizer, criterion, fair_dataset, args.epochs, model_type=args.model_type,
-                  weight_path=weight_path)
+    trainer = Trainer(model, optimizer, criterion)
+    trainer.train(fair_dataset, args.epochs, model_type=args.model_type, weight_path=weight_path)
 
     """
     evaluation

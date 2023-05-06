@@ -16,38 +16,48 @@ from .fairgkd import SynTeacher
 from .mlp_gcn import MLPGCN, GCNORI
 
 
-def build_model(args):
-    if args.model == 'gcn':
-        model = GCN(nfeat=args.nfeat,
-                    nhid=args.hidden,
-                    nclass=args.nclass,
-                    dropout=args.dropout)
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    elif args.model == 'sage':
-        model = SAGE(nfeat=args.nfeat,
-                     nhid=args.hidden,
-                     nclass=args.nclass,
-                     dropout=args.dropout)
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    elif args.model == 'gin':
-        model = GIN(nfeat=args.nfeat,
-                    nhid=args.hidden,
-                    nclass=args.nclass,
-                    dropout=args.dropout)
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    elif args.model == 'mlpgcn':
-        model = MLPGCN(nfeat=args.nfeat,
-                       nhid=args.hidden,
-                       nclass=args.nclass,
-                       dropout=args.dropout)
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    elif args.model == 'gcnori':
-        model = GCNORI(nfeat=args.nfeat,
-                       nhid=args.hidden,
-                       nclass=args.nclass,
-                       dropout=args.dropout)
-        optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    else:
-        print("Invalid model name")
-        return
-    return model, optimizer
+class BuildModel:
+    def __init__(self, args, device):
+        super(BuildModel, self).__init__()
+        self.args = args
+        self.device = device
+
+    def build(self):
+        if self.args.model == 'gcn':
+            model = GCN(nfeat=self.args.nfeat,
+                        nhid=self.args.hidden,
+                        nclass=self.args.nclass,
+                        dropout=self.args.dropout)
+            optimizer = optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+            model = model.to(self.device)
+        elif self.args.model == 'sage':
+            model = SAGE(nfeat=self.args.nfeat,
+                         nhid=self.args.hidden,
+                         nclass=self.args.nclass,
+                         dropout=self.args.dropout)
+            optimizer = optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+            model = model.to(self.device)
+        elif self.args.model == 'gin':
+            model = GIN(nfeat=self.args.nfeat,
+                        nhid=self.args.hidden,
+                        nclass=self.args.nclass,
+                        dropout=self.args.dropout)
+            optimizer = optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=args.weight_decay)
+            model = model.to(self.device)
+        elif self.args.model == 'mlpgcn':
+            model = MLPGCN(nfeat=self.args.nfeat,
+                           nhid=self.args.hidden,
+                           nclass=self.args.nclass,
+                           dropout=self.args.dropout)
+            optimizer = optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+            model = model.to(self.device)
+        elif self.args.model == 'gcnori':
+            model = GCNORI(nfeat=self.args.nfeat,
+                           nhid=self.args.hidden,
+                           nclass=self.args.nclass,
+                           dropout=self.args.dropout)
+            optimizer = optim.Adam(model.parameters(), lr=self.args.lr, weight_decay=self.args.weight_decay)
+            model = model.to(self.device)
+        else:
+            raise RuntimeError("Invalid model name")
+        return model, optimizer

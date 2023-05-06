@@ -1,1 +1,1 @@
-from .train_methods import *
+from .trainer import *

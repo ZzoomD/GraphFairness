@@ -1,7 +1,7 @@
 import torch
 from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 from .metrics import *
-from Train.train_methods import model_forward
+from Train.trainer import model_forward
 
 
 def evaluate(model, weight_path, data, model_type='gnn'):
