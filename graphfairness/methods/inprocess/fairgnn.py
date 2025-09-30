@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, roc_auc_score
 import torch.nn.functional as F
 from graphfairness.evaluation.metrics import *
 from tqdm import tqdm
+import os
 
 class FairGNN(Trainer):
     def __init__(self, model, **cfg):
@@ -61,6 +62,7 @@ class FairGNN(Trainer):
                     best_auc_val = ret_val["auc_val"]
                     best_acc_val = ret_val["acc_val"]
                     best_fair_val = ret_val["dp_val"] + ret_val["eo_val"]
+                    os.makedirs(os.path.dirname(self.weight_path), exist_ok=True)
                     torch.save(self.model.state_dict(), self.weight_path)
             
             if tpbar is not None:
@@ -90,6 +92,7 @@ class FairGNN(Trainer):
                 acc_val = accuracy_score(data.sens[data.idx_val].cpu(), s_pred[data.idx_val].cpu())
                 if acc_val > best_acc:
                     best_acc = acc_val
+                    os.makedirs(os.path.dirname(est_weight_path), exist_ok=True)
                     torch.save(self.estimator.state_dict(), est_weight_path)
         return est_weight_path
 
