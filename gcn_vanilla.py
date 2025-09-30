@@ -60,7 +60,7 @@ def run(args):
     """
     Load data
     """
-    root = '/home/yczhu/graph/datasets/'
+    root = '/home/yczhu/public_data/pyg_data/FairData'
     dataset = FairDataset(root=root, name=args.dataset)
     fair_dataset = dataset.data
     fair_dataset = fair_dataset.to(args.device)

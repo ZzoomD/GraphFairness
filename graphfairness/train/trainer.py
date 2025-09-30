@@ -3,6 +3,7 @@ from sklearn.metrics import roc_auc_score, f1_score, accuracy_score
 from graphfairness.evaluation.metrics import *
 from graphfairness.utils import BunchDict
 from tqdm import tqdm
+import os
 
 class Trainer:
     r"""Base trainer class for training graph neural networks, graph transformers, and other models.
@@ -116,6 +117,7 @@ class Trainer:
             
                 if loss_val.item() < self.best_loss:
                     self.best_loss = loss_val.item()
+                    os.makedirs(os.path.dirname(self.weight_path), exist_ok=True)
                     torch.save(self.model.state_dict(), self.weight_path)
 
             if tpbar is not None:
