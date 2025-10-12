@@ -4,7 +4,7 @@
 
 # An Open-Source Toolkit for Fair Graph Deep Learning
 
-# Supported Algorithms
+## Supported Algorithms
 
 | **Method** | **Paper Title** | **Publication** | **Method Category** |
 | --- | --- | --- | --- |
