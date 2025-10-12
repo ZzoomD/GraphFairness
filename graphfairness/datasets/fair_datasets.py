@@ -103,7 +103,7 @@ class FairDataset:
     name : str
         Lowercase dataset name.
     data_dir : str
-        Path to the dataset CSV file.
+        Path to the dataset file.
 
     Example
     -------
@@ -117,7 +117,7 @@ class FairDataset:
     >>> print(data.sens.unique())  # Sensitive attributes
     """
 
-    url = 'https://github.com/ZzoomD/GraphFairness/datasets/'
+    url = 'https://github.com/ZzoomD/FairData/raw/refs/heads/main/datasets/'
 
     def __init__(self, root: str, name: str):
         self.name = name.lower()
@@ -127,10 +127,10 @@ class FairDataset:
                 f'Unknown dataset {name}. Please take a look at '
                 '`FairDataset.available_datasets()` for more information.')
         super().__init__()
-        self.data_dir = osp.join(self.root, f'GraphFairness-{self.name}/{DATASET_MAP[self.name]["csv_name"]}.csv')
+        self.data_dir = osp.join(self.root, f'GraphFairness-{self.name}')
         if not osp.exists(self.data_dir):
             self.download()
-        self.data = self.load_data(self.name, osp.join(self.root, f'GraphFairness-{self.name}'), 
+        self.data = self.load_data(self.name, self.data_dir, 
                                     DATASET_MAP[self.name]["label_number"], split_ratio=[0.5, 0.25, 0.25])
     
     def load_data(self, dataset_name: str, file_base_path: str, label_number: int=100,
@@ -174,6 +174,7 @@ class FairDataset:
         - Splits data considering class imbalance for binary classification datasets
         """
         # load csv data and remove attributes
+        print(osp.join(file_base_path, f'{DATASET_MAP[dataset_name]["csv_name"]}.csv'))
         idx_features_labels = pd.read_csv(osp.join(file_base_path, f'{DATASET_MAP[dataset_name]["csv_name"]}.csv'))
         header = list(idx_features_labels.columns)
         idx_by_id = True if 'user_id' in header else False
@@ -325,11 +326,11 @@ class FairDataset:
         return self.data_dir
 
     def download(self):
-        download_url(osp.join(self.url, f'{DATASET_MAP[self.name]["csv_name"]}.csv'), self.data_dir)
+        download_url(osp.join(self.url, f'{self.name}/{DATASET_MAP[self.name]["csv_name"]}.csv'), self.data_dir)
         if self.name in ['german', 'bail', 'credit']:
-           download_url(osp.join(self.url, f'{DATASET_MAP[self.name]["csv_name"]}_edges.txt'), self.data_dir)
+           download_url(osp.join(self.url, f'{self.name}/{DATASET_MAP[self.name]["csv_name"]}_edges.txt'), self.data_dir)
         else:
-           download_url(osp.join(self.url, f'{DATASET_MAP[self.name]["csv_name"]}_relationship.txt'), self.data_dir)
+           download_url(osp.join(self.url, f'{self.name}/{DATASET_MAP[self.name]["csv_name"]}_relationship.txt'), self.data_dir)  
 
     @staticmethod
     def available_datasets() -> List[str]:
