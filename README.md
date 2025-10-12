@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="imgs/graphfairness_logo.png" style="width: 60%;"/>
+<img src="imgs/graphfairness_logo.png" style="width: 80%;"/>
 
 # An Open-Source Toolkit for Fair Graph Deep Learning
 
