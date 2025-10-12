@@ -7,10 +7,71 @@ import random
 from sklearn.metrics import accuracy_score, roc_auc_score
 import torch.nn.functional as F
 from graphfairness.evaluation.metrics import *
+from graphfairness.utils import BunchDict
 from tqdm import tqdm
 import os
 
 class FairGNN(Trainer):
+    r"""Implementation of `FairGNN` from the paper entitled `“Say No to the Discrimination: 
+    Learning Fair Graph Neural Networks with Limited Sensitive Attribute Information” <https://arxiv.org/pdf/2009.01454>`.
+
+    FairGNN incorporates adversarial training to reduce discrimination against sensitive attributes 
+    under limited sensitive attribute information. It consists of three main components: a GNN backbone 
+    for classification, a sensitive attribute estimator, and an adversary that aims to predict sensitive 
+    attributes from node embeddings.
+
+    Parameters
+    ----------
+    model : nn.Module
+        The GNN backbone model used for classification
+    **cfg : dict
+        Additional configuration parameters
+        - lr : float, optional
+            Learning rate for optimization, by default 1e-3
+        - weight_decay : float, optional
+            Weight decay for regularization, by default 1e-5
+        - nfeat : int
+            Number of input features
+        - nhid : list or int
+            Number of hidden units in each layer
+        - nclass : int
+            Number of output classes
+        - dropout : float
+            Dropout probability
+
+    Example
+    -------
+    .. code-block:: python
+
+        from graphfairness.methods.inprocess.fairgnn import FairGNN
+        from graphfairness.models import GCN
+        import torch_geometric as pyg
+
+        # load data
+        dataset = FairDataset(root='./', name='german')
+        n_feat = dataset.data.features.shape[1]
+
+        # Initialize the GNN backbone
+        gnn_model = GCN(nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+        
+        # Create FairGNN instance
+        fair_model = FairGNN(gnn_model, nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+        
+        # Train the model
+        fair_model.train(data, epochs=200, validation=True, alpha=4, beta=0.01)
+        
+        # Evaluate the model
+        metrics = fair_model.evaluate(data)
+        print(f"Accuracy: {metrics['acc_val']:.4f}")
+        print(f"AUC: {metrics['auc_val']:.4f}")
+        print(f"Demographic Parity: {metrics['dp_val']:.4f}")
+        print(f"Equal Opportunity: {metrics['eo_val']:.4f}")
+
+    Note
+    ----
+    * The training process requires some sensitive attribute information for training the sensitive attribute estimator.
+    * Hyperparameters alpha and beta control the trade-off between fairness and accuracy.
+    """
     def __init__(self, model, **cfg):
         super().__init__(model)
         self.model = model
@@ -31,6 +92,9 @@ class FairGNN(Trainer):
         self.optimizer_a = torch.optim.Adam(self.adversary.parameters(), lr=lr, weight_decay=weight_decay)
 
         self.criterion = torch.nn.BCEWithLogitsLoss()
+
+        # reset parameters
+        self.adversary.reset_parameters()
 
     def train(self, data, epochs, validation=True, **train_wargs):
         # parsing parameters
@@ -144,17 +208,18 @@ class FairGNN(Trainer):
         self.model.eval()
         output = self.model(data.features, data.edge_index)
         output = output.detach()
-        preds = (output.squeeze() > 0).type_as(data.sens)
+        preds = (output.squeeze() > 0).type_as(data.labels)
         if is_predict:
             return output
         else:
             auc_val = roc_auc_score(data.labels.cpu().numpy()[data.idx_val.cpu()],
                                     output.detach().cpu().numpy()[data.idx_val.cpu()])
-            # f1_test = f1_score(data.labels[data.idx_val].cpu().numpy(), preds[data.idx_val].cpu().numpy())
+            f1_val = f1_score(data.labels[data.idx_val].cpu().numpy(), preds[data.idx_val].cpu().numpy())
             acc_val = accuracy_score(data.labels[data.idx_val].cpu().numpy(), preds[data.idx_val].cpu().numpy())
             parity_val, equality_val = fair_metric(preds[data.idx_val].cpu().numpy(), data.labels[data.idx_val].cpu().numpy(),
                                                     data.sens[data.idx_val].cpu().numpy())
             return dict(auc_val=auc_val,
+                        f1_val=f1_val,
                         acc_val=acc_val,
                         dp_val=parity_val,
                         eo_val=equality_val)
