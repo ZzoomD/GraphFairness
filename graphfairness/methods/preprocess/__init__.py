@@ -1,0 +1,1 @@
+from .fairdrop import FairDrop
