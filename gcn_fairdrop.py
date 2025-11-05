@@ -11,7 +11,7 @@ warnings.filterwarnings('ignore')
 
 from graphfairness.datasets.fair_datasets import FairDataset
 from graphfairness.models import *
-from graphfairness.methods import *
+from graphfairness.methods.preprocess.fairdrop import FairDrop
 from graphfairness.train import *
 from graphfairness.evaluation import *
 from graphfairness.utils import *
@@ -33,6 +33,7 @@ def args_parser():
     parser.add_argument('--model', type=str, default='gcn',
                         choices=['gcn', 'sage', 'gin', 'jk', 'infomax', 'ssf', 'RobustGCN'])
     parser.add_argument('--save_results', type=bool, default=False)
+    parser.add_argument('--delta', type=float, default=0.25, help='The probability of randomized response, ranging from 0 to 0.5.')
 
     args = parser.parse_known_args()[0]
     args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -79,13 +80,14 @@ def run(args):
     """
     Train model
     """
-    vanilla = Vanilla(model)
-    vanilla.train(fair_dataset, args.epochs)
+    print("training")
+    fairdrop = FairDrop(model)
+    fairdrop.train(fair_dataset, args.epochs, delta=args.delta)
 
     """
     evaluation
     """
-    results = vanilla.evaluate(fair_dataset)
+    results = fairdrop.evaluate(fair_dataset)
 
     return results['auc'], results['f1'], results['acc'], results['dp'], results['eo']
 
