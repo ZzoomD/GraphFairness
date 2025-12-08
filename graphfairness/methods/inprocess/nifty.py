@@ -106,7 +106,10 @@ class NIFTY(Trainer):
         self.drop_feature_rate_2 = self.cfg.get('drop_feature_rate_2', 0.1)
 
         self.gnn_output_dim = self.cfg.nhid[-1] if isinstance(self.cfg.nhid, list) else self.cfg.nhid
-        
+
+        print(f"Applying Lipschitz-based Spectral Normalization to model layers...")
+        self.apply_spectral_norm_recursively(self.model)
+
         # Projection head
         self.fc1 = nn.Sequential(
             spectral_norm(nn.Linear(self.gnn_output_dim, self.proj_hidden)),
@@ -188,6 +191,32 @@ class NIFTY(Trainer):
 
         return x
 
+
+    # Recursively applies Spectral Normalization to relevant layers in a model
+    def apply_spectral_norm_recursively(self, model):
+        for name, module in model.named_children():
+            # Apply to standard linear layers
+            if isinstance(module, (nn.Linear)):
+                if not any(isinstance(hook, torch.nn.utils.spectral_norm.SpectralNorm) for hook in module._forward_pre_hooks.values()):
+                    setattr(model, name, spectral_norm(module))
+            
+            # Apply to GCNConv layers
+            elif isinstance(module, GCNConv):
+                if not hasattr(module, 'lin') or not any(isinstance(hook, torch.nn.utils.spectral_norm.SpectralNorm) for hook in module.lin._forward_pre_hooks.values()):
+                    if hasattr(module, 'lin') and isinstance(module.lin, nn.Linear):
+                        setattr(module, 'lin', spectral_norm(module.lin))
+                    elif hasattr(module, 'weight'): 
+                        pass 
+            
+            # Recurse into ModuleList containers
+            elif isinstance(module, nn.ModuleList):
+                for i, sub_module in enumerate(module):
+                    self.apply_spectral_norm_recursively(sub_module)
+            
+            # Recurse into other submodules
+            else:
+                self.apply_spectral_norm_recursively(module)
+                
     def train(self, data, epochs, validation=True, **train_wargs):
         # Get sensitive attribute index from train_wargs
         sens_idx = train_wargs.get('sens_idx', 0)
@@ -208,7 +237,6 @@ class NIFTY(Trainer):
         val_x_1 = self.drop_feature(data.features, self.drop_feature_rate_1, sens_idx, sens_flag=False)
         val_x_2 = self.drop_feature(data.features, self.drop_feature_rate_2, sens_idx)
 
-        best_loss = float('inf')
         best_auc_val = 0.0
         
         tpbar = tqdm(total=epochs, desc=f"Training", unit="epoch", bar_format="{l_bar}{bar:30}{r_bar}")
@@ -217,22 +245,13 @@ class NIFTY(Trainer):
             loss_train = self.train_step(data, sens_idx)
 
             if validation:
-                val_s_loss, val_c_loss = self.validation_step(
-                    data, val_x_1, val_edge_index_1, val_x_2, val_edge_index_2
-                )
-                val_loss = val_s_loss + val_c_loss
+                # 调用evaluate_step获取验证指标（包含auc_val）
+                metrics = self.evaluate_step(data)
+                current_auc_val = metrics['auc_val']
 
-                # Get validation metrics
-                self.model.eval()
-                emb = self.model(data.features, data.edge_index)
-                output = self.classifier(emb)
-                preds = (output.squeeze() > 0).type_as(data.labels)
-                auc_val = roc_auc_score(data.labels.cpu().numpy()[data.idx_val.cpu()], 
-                                       output.detach().cpu().numpy()[data.idx_val.cpu()])
-
-                if val_loss < best_loss:
-                    best_loss = val_loss
-                    best_auc_val = auc_val
+                # 用当前AUC值更新最佳模型
+                if current_auc_val > best_auc_val:
+                    best_auc_val = current_auc_val
                     os.makedirs(os.path.dirname(self.weight_path), exist_ok=True)
                     torch.save(self.model.state_dict(), self.weight_path)
             
@@ -305,39 +324,6 @@ class NIFTY(Trainer):
         total_loss = sim_loss.item() + cl_loss.item()
         return total_loss
 
-    def validation_step(self, data, x_1, edge_index_1, x_2, edge_index_2):
-        self.model.eval()
-        self.fc1.eval()
-        self.fc2.eval()
-        self.fc3.eval()
-        self.fc4.eval()
-        self.classifier.eval()
-        
-        with torch.no_grad():
-            z1 = self.model(x_1, edge_index_1)
-            z2 = self.model(x_2, edge_index_2)
-
-            # Projections
-            p1 = self.projection(z1)
-            p2 = self.projection(z2)
-            
-            # Predictions
-            h1 = self.prediction(p1)
-            h2 = self.prediction(p2)
-            
-            # Contrastive loss
-            l1 = self.D(h1[data.idx_val], p2[data.idx_val]) / 2
-            l2 = self.D(h2[data.idx_val], p1[data.idx_val]) / 2
-            sim_loss = self.sim_coeff * (l1 + l2)
-
-            # Classification loss
-            c1 = self.classifier(z1)
-            c2 = self.classifier(z2)
-            l3 = self.criterion(c1[data.idx_val], data.labels[data.idx_val].unsqueeze(1).float()) / 2
-            l4 = self.criterion(c2[data.idx_val], data.labels[data.idx_val].unsqueeze(1).float()) / 2
-            cl_loss = (1 - self.sim_coeff) * (l3 + l4)
-
-        return sim_loss.item(), cl_loss.item()
 
     @torch.no_grad()
     def evaluate_step(self, data, is_predict=False):

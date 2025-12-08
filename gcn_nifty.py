@@ -62,33 +62,6 @@ def set_seed(seed):
     # torch.backends.cuda.matmul.allow_tf32 = False
     torch.backends.cudnn.allow_tf32 = False
 
-
-# Recursively applies Spectral Normalization to relevant layers in a model
-def apply_spectral_norm_recursively(model):
-    for name, module in model.named_children():
-        # Apply to standard linear layers
-        if isinstance(module, (nn.Linear)):
-            if not any(isinstance(hook, torch.nn.utils.spectral_norm.SpectralNorm) for hook in module._forward_pre_hooks.values()):
-                 setattr(model, name, spectral_norm(module))
-        
-        # Apply to GCNConv layers
-        elif isinstance(module, GCNConv):
-            if not hasattr(module, 'lin') or not any(isinstance(hook, torch.nn.utils.spectral_norm.SpectralNorm) for hook in module.lin._forward_pre_hooks.values()):
-                if hasattr(module, 'lin') and isinstance(module.lin, nn.Linear):
-                    setattr(module, 'lin', spectral_norm(module.lin))
-                elif hasattr(module, 'weight'): 
-                     pass 
-        
-        # Recurse into ModuleList containers
-        elif isinstance(module, nn.ModuleList):
-            for i, sub_module in enumerate(module):
-                apply_spectral_norm_recursively(sub_module)
-        
-        # Recurse into other submodules
-        else:
-            apply_spectral_norm_recursively(module)
-
-
 def run(args):
     """
     Load data
@@ -110,8 +83,6 @@ def run(args):
                                 nfeat=args.nfeat, 
                                 nclass=gnn_embedding_dim) 
 
-    print(f"Applying Lipschitz-based Spectral Normalization to {args.model} layers...")
-    apply_spectral_norm_recursively(model)
 
     """
     Train model
