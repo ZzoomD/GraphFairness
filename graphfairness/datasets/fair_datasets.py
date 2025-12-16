@@ -131,7 +131,7 @@ class FairDataset:
         if not osp.exists(self.data_dir):
             self.download()
         self.data = self.load_data(self.name, self.data_dir, 
-                                    DATASET_MAP[self.name]["label_number"], split_ratio=[0.5, 0.25, 0.25])
+                                    DATASET_MAP[self.name]["label_number"], split_ratio=[0.2, 0.35, 0.45])
     
     def load_data(self, dataset_name: str, file_base_path: str, label_number: int=100,
                     split_ratio: List[float]=[0.5, 0.25, 0.25]) -> DictObject:
@@ -250,13 +250,16 @@ class FairDataset:
         idx_train, idx_val, idx_test = self.split_nodes(label_idx, split_ratio, label_number)
         
         sens = torch.FloatTensor(idx_features_labels[DATASET_MAP[dataset_name]["sens_attr"]].values.astype(int))
+
+        idx_sens_all = np.where(sens.numpy() >= 0)[0]
+        idx_sens_all = torch.LongTensor(idx_sens_all)
         
         if dataset_name in ['pokec_z', 'pokec_n', 'nba']:
             labels[labels > 1] = 1
 
         data_dict = dict(dataset=dataset_name, features=features, edge_index=edge_index, 
                          labels=labels, sens=sens, 
-                         idx_train=idx_train, idx_val=idx_val, idx_test=idx_test
+                         idx_train=idx_train, idx_val=idx_val, idx_test=idx_test, idx_sens=idx_sens_all
                          )
         data = DictObject(data_dict)
 
