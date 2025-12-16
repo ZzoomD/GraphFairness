@@ -8,9 +8,9 @@
 
 ## Overview
 GroupFairness is an open-source toolkit for fair graph deep learning. It provides a collection of state-of-the-art algorithms for fair graph representation learning. The toolkit is designed to be easy to train and evaluate graph deep learning models. Specifically, GroupFairness includes five modules, i.e., datasets, data loader & pre-processing, model architecture, model training, model evaluation. The overview of the toolkit is shown in the figure below.
-
+<div align="center">
 <img src="imgs/overview.png" style="width: 80%;"/>
-
+</div>
 
 ## Supported Algorithms
 GroupFairness supports the following algorithms which can be categorized into pre-processing and in-processing methods.
