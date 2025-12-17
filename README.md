@@ -5,6 +5,7 @@
 # An Open-Source Toolkit for Fair Graph Deep Learning
 
 </div>
+
 ![GitHub Repo stars](https://img.shields.io/github/stars/ZzoomD/GraphFairness)
 ![GitHub forks](https://img.shields.io/github/forks/ZzoomD/GraphFairness)
 ![GitHub watchers](https://img.shields.io/github/watchers/ZzoomD/GraphFairness)
@@ -12,17 +13,25 @@
 ![GitHub repo file count (file type)](https://img.shields.io/github/directory-file-count/ZzoomD/GraphFairness)
 ![GitHub repo size](https://img.shields.io/github/repo-size/ZzoomD/GraphFairness)
 ![GitHub milestones](https://img.shields.io/github/milestones/all/ZzoomD/GraphFairness)
-![GitHub release (release name instead of tag name)](https://img.shields.io/github/v/release/ZzoomD/GraphFairness)
-![GitHub all releases](https://img.shields.io/github/downloads/ZzoomD/GraphFairness/total)
 ![GitHub issues](https://img.shields.io/github/issues/ZzoomD/GraphFairness)
 ![GitHub closed issues](https://img.shields.io/github/issues-closed/ZzoomD/GraphFairness)
-![GitHub](https://img.shields.io/github/license/ZzoomD/GraphFairness)
+<!-- ![GitHub release (release name instead of tag name)](https://img.shields.io/github/v/release/ZzoomD/GraphFairness)
+![GitHub all releases](https://img.shields.io/github/downloads/ZzoomD/GraphFairness/total)
+![GitHub](https://img.shields.io/github/license/ZzoomD/GraphFairness) -->
 
 ## Overview
 GroupFairness is an open-source toolkit for fair graph deep learning. It provides a collection of state-of-the-art algorithms for fair graph representation learning. The toolkit is designed to be easy to train and evaluate graph deep learning models. Specifically, GroupFairness includes five modules, i.e., datasets, data loader & pre-processing, model architecture, model training, model evaluation. The overview of the toolkit is shown in the figure below.
 <div align="center">
 <img src="imgs/overview.png" style="width: 80%;"/>
 </div>
+
+## Quickstart
+
+### Installation
+
+### Usage
+
+
 
 ## Supported Algorithms
 GroupFairness supports the following algorithms which can be categorized into pre-processing and in-processing methods.
