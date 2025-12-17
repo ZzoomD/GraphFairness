@@ -13,9 +13,9 @@
 ![GitHub repo size](https://img.shields.io/github/repo-size/ZzoomD/GraphFairness)
 ![GitHub milestones](https://img.shields.io/github/milestones/all/ZzoomD/GraphFairness)
 ![GitHub release (release name instead of tag name)](https://img.shields.io/github/v/release/ZzoomD/GraphFairness)
-<!-- ![GitHub all releases](https://img.shields.io/github/downloads/ZzoomD/GraphFairness/total)
+![GitHub all releases](https://img.shields.io/github/downloads/ZzoomD/GraphFairness/total)
 ![GitHub issues](https://img.shields.io/github/issues/ZzoomD/GraphFairness)
-![GitHub closed issues](https://img.shields.io/github/issues-closed/ZzoomD/GraphFairness) -->
+![GitHub closed issues](https://img.shields.io/github/issues-closed/ZzoomD/GraphFairness)
 ![GitHub](https://img.shields.io/github/license/ZzoomD/GraphFairness)
 
 ## Overview
