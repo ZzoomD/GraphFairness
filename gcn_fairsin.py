@@ -64,7 +64,17 @@ def run(args):
     dataset = FairDataset(root=root, name=args.dataset)
     fair_dataset = dataset.data
     fair_dataset = fair_dataset.to(args.device)
-    
+
+    #Feature Standardization for German dataset
+    if args.dataset in ['german']:
+        print(f"Standardizing features for {args.dataset}...")
+        features = fair_dataset.features.float()
+        # Use training stats only to prevent leakage
+        train_mask = fair_dataset.idx_train
+        mean = features[train_mask].mean(dim=0)
+        std = features[train_mask].std(dim=0)
+        std[std == 0] = 1.0 
+        fair_dataset.features = (features - mean) / std    
 
     args.nfeat = fair_dataset.features.shape[1]
     args.nclass = 1  # Binary classification for fairness datasets typically
