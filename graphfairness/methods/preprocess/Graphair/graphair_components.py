@@ -38,16 +38,18 @@ class GCNLayer(nn.Module):
         return x
 
 class GCN_Body(nn.Module):
-    def __init__(self, in_feats, n_hidden, out_feats, nlayer, dropout):
+    def __init__(self, in_feats, n_hidden, out_feats, dropout, nlayer):
         super(GCN_Body, self).__init__()
         self.layers = nn.ModuleList()
+
         # input layer
         self.layers.append(GCNLayer(in_feats, n_hidden))
         # hidden layers
         for i in range(nlayer - 2):
             self.layers.append(GCNLayer(n_hidden, n_hidden))
         # output layer
-        self.layers.append(GCNLayer(n_hidden, out_feats, activation=None)) # 最后一层通常无激活
+        self.layers.append(GCNLayer(n_hidden, out_feats, activation=None)) 
+
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, g, x):
@@ -59,7 +61,6 @@ class GCN_Body(nn.Module):
             cnt += 1
             h = (layer(g, h))
         return h
-
 
 class GCN(nn.Module):
     def __init__(self, in_feats, n_hidden, out_feats, nclass, dropout = 0.2, nlayer = 2):
@@ -118,8 +119,6 @@ class aug_module(torch.nn.Module):
         return adj_sampled, x_new, adj_logits
     
     def normalize_adj(self,adj):
-        
-        
         adj.fill_diagonal_(1)
         # normalize adj with A = D^{-1/2} @ A @ D^{-1/2}
         D_norm = torch.diag(torch.pow(adj.sum(1), -0.5)).cuda()
