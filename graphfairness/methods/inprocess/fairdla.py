@@ -9,7 +9,7 @@ import numpy as np
 from sklearn.metrics import accuracy_score, roc_auc_score, f1_score
 
 from ...utils.utils import DistCor
-from ...utils.fairness import fair_metric
+from ...evaluation.metrics import fair_metric
 
 
 class FairDLA:

@@ -1,2 +1,4 @@
-from .fairgnn import FairGNN
-from .fairvgnn import FairVGNN
+from .fairgnn import *
+from .fairvgnn import *
+from .fairdla import *
+from .fairgt import *
