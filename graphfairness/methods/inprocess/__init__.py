@@ -3,3 +3,4 @@ from .fairvgnn import *
 from .fairdla import *
 from .fairgt import *
 from .fairgp import *
+from .fugnn import *
