@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+FairData/
+weights/
+.DS_Store
+.idea/
+.vscode/

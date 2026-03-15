@@ -1,5 +1,38 @@
 import torch
 import numpy as np
+from torch.nn.modules.loss import _Loss
+
+
+class DistCor(_Loss):
+    def __init__(self):
+        super(DistCor, self).__init__()
+
+    def Distance_Correlation(self, channel1, channel2):
+        assert channel1.shape[1] == channel2.shape[1], "The dim of two tensors need to be equal"
+        dim_num = channel1.shape[1]
+        correlation_r = 0
+        for i in range(dim_num):
+            latent = channel1[:, i]
+            latent = latent.unsqueeze(1)
+            control = channel2[:, i]
+            control = control.unsqueeze(1)
+
+            matrix_a = torch.sqrt(torch.sum(torch.square(latent.unsqueeze(0) - latent.unsqueeze(1)), dim = -1) + 1e-12)
+            matrix_b = torch.sqrt(torch.sum(torch.square(control.unsqueeze(0) - control.unsqueeze(1)), dim = -1) + 1e-12)
+
+            matrix_A = matrix_a - torch.mean(matrix_a, dim = 0, keepdims= True) - torch.mean(matrix_a, dim = 1, keepdims= True) + torch.mean(matrix_a)
+            matrix_B = matrix_b - torch.mean(matrix_b, dim = 0, keepdims= True) - torch.mean(matrix_b, dim = 1, keepdims= True) + torch.mean(matrix_b)
+
+            Gamma_XY = torch.sum(matrix_A * matrix_B)/ (matrix_A.shape[0] * matrix_A.shape[1])
+            Gamma_XX = torch.sum(matrix_A * matrix_A)/ (matrix_A.shape[0] * matrix_A.shape[1])
+            Gamma_YY = torch.sum(matrix_B * matrix_B)/ (matrix_A.shape[0] * matrix_A.shape[1])
+
+            correlation_r += Gamma_XY/torch.sqrt(Gamma_XX * Gamma_YY + 1e-9)
+        return correlation_r
+
+    def forward(self, channel1, channel2):
+        dc_loss = self.Distance_Correlation(channel1, channel2)
+        return dc_loss
 
 
 class Results:
