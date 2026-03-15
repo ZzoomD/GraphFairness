@@ -50,6 +50,9 @@ GroupFairness supports the following algorithms which can be categorized into pr
 | FairVGNN | [Improving Fairness in Graph Neural Networks via Mitigating Sensitive Attribute Leakage](https://arxiv.org/pdf/2206.03426) | KDD 2022 | In-processing |
 | FairSIN | [FairSIN: Achieving Fairness in Graph Neural Networks through Sensitive Information Neutralization](https://arxiv.org/pdf/2403.12474) | AAAI 2024 | In-processing |
 | FairGB | [Rethinking Fair Graph Neural Networks from Re-balancing](https://arxiv.org/pdf/2407.11624) | KDD 2024 | In-processing |
+| FairGT | [FairGT: A Fairness-aware Graph Transformer](https://arxiv.org/pdf/2404.17169) | IJCAI 2024 | In-processing |
+| FUGNN | [FUGNN: Harmonizing Fairness and Utility in Graph Neural Networks](https://arxiv.org/pdf/2405.17034) | KDD 2024 | In-processing |
+| FairGP | [FairGP: A Scalable and Fair Graph Transformer Using Graph Partitioning](https://arxiv.org/pdf/2412.10669) | AAAI 2025 | Pre-processing |
 | FairDLA | [Fairdla: Improving the Fairness-Utility Trade-Off in Graph Neural Networks Via Dual-Level Alignment](https://www.sciencedirect.com/science/article/abs/pii/S0950705125008147) | KBS 2025 | In-processing |
 
 
