@@ -30,8 +30,32 @@ GroupFairness is an open-source toolkit for fair graph deep learning. It provide
 ### Installation
 
 ### Usage
+Get started with GNN training and evaluation in only five steps. Taking FairGNN as an example (refer to [Supported Algorithms](#supported-algorithms) for more fairness methods):
+```python
+from graphfairness.methods.inprocess.fairgnn import FairGNN
+from graphfairness.models import GCN
+import torch_geometric as pyg
 
+# Step1: load data
+dataset = FairDataset(root='./', name='german')
+n_feat = dataset.data.features.shape[1]
 
+# Step2: Initialize the GNN backbone
+gnn_model = GCN(nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+
+# Step3: Create the fairness method instance
+fair_model = FairGNN(gnn_model, nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+
+# Step4: Train the model
+fair_model.train(data, epochs=200, validation=True, alpha=4, beta=0.01)
+
+# Step5: Evaluate the model
+metrics = fair_model.evaluate(data)
+print(f"Accuracy: {metrics['acc_val']:.4f}")
+print(f"AUC: {metrics['auc_val']:.4f}")
+print(f"Demographic Parity: {metrics['dp_val']:.4f}")
+print(f"Equal Opportunity: {metrics['eo_val']:.4f}")
+```
 
 ## Supported Algorithms
 GroupFairness supports the following algorithms which can be categorized into pre-processing and in-processing methods.
@@ -56,3 +80,6 @@ GroupFairness supports the following algorithms which can be categorized into pr
 | FairDLA | [Fairdla: Improving the Fairness-Utility Trade-Off in Graph Neural Networks Via Dual-Level Alignment](https://www.sciencedirect.com/science/article/abs/pii/S0950705125008147) | KBS 2025 | In-processing |
 
 
+## Get in Touch
+We welcome contributions! If you have any questions or would like to integrate your fairness algorithm into our framework, please contact us:
+- **Email**: [zhuych27@mail2.sysu.edu.cn](mailto:zhuych27@mail2.sysu.edu.cn)
