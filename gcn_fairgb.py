@@ -3,12 +3,12 @@ import numpy as np
 import torch
 import random
 import warnings
-from torch_sparse import SparseTensor
+import os
 warnings.filterwarnings('ignore')
 
 from graphfairness.datasets.fair_datasets import FairDataset
 from graphfairness.models import *
-from graphfairness.methods import *
+from graphfairness.methods import * 
 from graphfairness.utils import *
 
 def args_parser():
@@ -16,22 +16,21 @@ def args_parser():
     parser.add_argument('--no-cuda', action='store_true', default=False,
                         help='Disables CUDA training.')
     parser.add_argument('--seed_num', type=int, default=5, help='The number of random seed.')
-    parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs to train.')  
+    parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs to train.')
     parser.add_argument('--lr', type=float, default=0.001, help='Initial learning rate.')
     parser.add_argument('--weight_decay', type=float, default=1e-5, help='Weight decay.')
-    parser.add_argument('--nhid', type=str, default='32', help='Number of hidden units.') 
-    parser.add_argument('--dropout', type=float, default=0.3, help='Dropout rate.')  
-    parser.add_argument('--dataset', type=str, default='pokec_n',
+    parser.add_argument('--nhid', type=str, default='16', help='Number of hidden units.')
+    parser.add_argument('--dropout', type=float, default=0.5, help='Dropout rate.')
+    parser.add_argument('--dataset', type=str, default='german',
                         choices=['nba', 'bail', 'pokec_z', 'pokec_n', 'credit', 'german'])
     parser.add_argument('--model', type=str, default='gcn',
                         choices=['gcn', 'sage', 'gin'])
-    
-    # FairSIN specific arguments 
-    parser.add_argument('--delta', type=float, default=0.8, help='Strength of feature neutralization.')
-    parser.add_argument('--beta', type=float, default=0.1, help='Adversarial training coefficient.')
-    parser.add_argument('--m_epochs', type=int, default=300, help='Epochs for estimator pre-training.')
-    parser.add_argument('--m_hidden', type=int, default=32, help='Hidden dimension for estimator.')
-    parser.add_argument('--m_lr', type=float, default=0.005, help='Learning rate for estimator pre-training.')
+    parser.add_argument('--gpu', type=int, default=0, help='GPU id to use.')
+
+    # FairGB specific arguments
+    parser.add_argument('--eta', type=float, default=0.5, help='Hyperparameter for mixup ratio.')
+    parser.add_argument('--warmup', type=int, default=5, help='Number of warmup epochs.')
+    parser.add_argument('--alpha', type=float, default=1.0, help='Trade-off parameter.')
     
     parser.add_argument('--save_results', type=bool, default=False)
 
@@ -39,7 +38,14 @@ def args_parser():
     args.cuda = not args.no_cuda and torch.cuda.is_available()
 
     # set device
-    args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if args.cuda:
+        if args.gpu >= 0 and args.gpu < torch.cuda.device_count():
+            args.device = torch.device(f'cuda:{args.gpu}')
+        else:
+            args.device = torch.device('cuda:0')
+    else:
+        args.device = torch.device('cpu')
+    
     args.nhid = [int(x.strip()) for x in args.nhid.split(',')]
 
     return args
@@ -51,22 +57,16 @@ def set_seed(seed):
     if args.cuda:
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.allow_tf32 = False
 
-
 def run(args):
-    """
-    Load data
-    """
+    # Load data
     root = '/home/zzxie/public_data/pyg_data/FairData' 
     dataset = FairDataset(root=root, name=args.dataset)
-    fair_dataset = dataset.data
-    fair_dataset = fair_dataset.to(args.device)
+    fair_dataset = dataset.data.to(args.device)
 
-    #Feature Standardization for German dataset
-    if args.dataset in ['german']:
+    #Feature Standardization for German, Credit, NBA datasets
+    if args.dataset in ['german', 'credit', 'nba']:
         print(f"Standardizing features for {args.dataset}...")
         features = fair_dataset.features.float()
         # Use training stats only to prevent leakage
@@ -74,58 +74,47 @@ def run(args):
         mean = features[train_mask].mean(dim=0)
         std = features[train_mask].std(dim=0)
         std[std == 0] = 1.0 
-        fair_dataset.features = (features - mean) / std    
+        fair_dataset.features = (features - mean) / std
 
     args.nfeat = fair_dataset.features.shape[1]
-    args.nclass = 1  # Binary classification for fairness datasets typically
+    args.nclass = 1 
 
-    """
-    Build model and optimizer
-    """
+    # Build model
     model_builder = ModelBuilder(device=args.device)
     model = model_builder.build(model_name=args.model, 
                                 nfeat=args.nfeat, 
                                 nhid=args.nhid,
                                 nclass=args.nclass,
-                                dropout=args.dropout,
-                                )
+                                dropout=args.dropout)
 
-    """
-    Train model
-    """
-    # Create FairSIN instance
-    fairsin = FairSIN(model, 
-                      nfeat=args.nfeat, 
-                      nhid=args.nhid, 
-                      lr=args.lr, 
-                      weight_decay=args.weight_decay, 
-                      m_hidden=args.m_hidden,
-                      m_lr=args.m_lr)
-    
-    
     # Train
-    fairsin.train(fair_dataset, 
-                  epochs=args.epochs, 
-                  m_epochs=args.m_epochs,
-                  delta=args.delta, 
-                  beta=args.beta)
+    fairgb = FairGB(model, 
+                    lr=args.lr, 
+                    weight_decay=args.weight_decay,
+                    eta=args.eta,
+                    warmup=args.warmup,
+                    alpha=args.alpha)
+    
+    fairgb.train(fair_dataset, 
+                 epochs=args.epochs,
+                 eta=args.eta,
+                 warmup=args.warmup)
 
-
-    results = fairsin.evaluate(fair_dataset, delta=args.delta)
+    # Evaluation
+    results = fairgb.evaluate(fair_dataset, split='test')
 
     return results['auc'], results['f1'], results['acc'], results['dp'], results['eo']
 
 if __name__ == '__main__':
     # Training settings
     args = args_parser()
-
     model_num = 1
     results = Results(args.seed_num, model_num)
 
     print(f"=============Train START ({args.dataset} - {args.model})=============")
     for seed in range(args.seed_num):
+        # set seeds
         set_seed(seed)
-        
         auc, f1, acc, dp, eo = run(args)
         
         results.auc[seed, 0] = auc
@@ -136,7 +125,6 @@ if __name__ == '__main__':
         
         print(f"Seed {seed}: AUC={auc:.4f}, F1={f1:.4f}, ACC={acc:.4f}, DP={dp:.4f}, EO={eo:.4f}")
 
-    # reporting results
     print(f"=============Train END=============")
     results.report_results()
     if args.save_results:
