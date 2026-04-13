@@ -11,7 +11,8 @@ import os
 from tqdm import tqdm
 
 class FairVGNN(Trainer):
-    r"""Implementation of `FairVGNN` from the paper.
+    r"""Implementation of `FairVGNN` from the paper entitled `“Improving Fairness in Graph Neural Networks via Mitigating 
+    Sensitive Attribute Leakage” <https://arxiv.org/pdf/2206.03426>`.
 
     FairVGNN is a fairness-aware graph neural network that incorporates variational graph representation learning
     with adversarial training to reduce discrimination against sensitive attributes. It uses a feature mask generator
@@ -53,16 +54,23 @@ class FairVGNN(Trainer):
     .. code-block:: python
 
         from graphfairness.methods.inprocess.fairvgnn import FairVGNN
-        from graphfairness.models import GCN
         from graphfairness.data import FairDataset
+        from graphfairness.models import ModelBuilder
+        import torch
 
         # Load data
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         dataset = FairDataset(root='./', name='german')
-        data = dataset[0]
-        n_feat = data.features.shape[1]
+        fair_dataset = dataset.data.to(device)
+        n_feat = fair_dataset.features.shape[1]
         
-        # Initialize the GNN backbone
-        gnn_model = GCN(nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+        # Build student model using ModelBuilder
+        model_builder = ModelBuilder(device)
+        model = model_builder.build(model_name='gcn',
+                                    nfeat=n_feat,
+                                    nclass=1,
+                                    nhid=[16],
+                                    dropout=0.5)
         
         # Create FairVGNN instance with configuration
         config = {
@@ -77,13 +85,13 @@ class FairVGNN(Trainer):
             'ratio': 0.01,
             'clip_e': 0.1
         }
-        fair_model = FairVGNN(gnn_model, **config)
+        fair_model = FairVGNN(model, **config)
         
         # Train the model
-        fair_model.train(data, epochs=200, validation=True)
+        fair_model.train(fair_dataset, epochs=200, validation=True)
         
         # Evaluate the model
-        metrics = fair_model.evaluate(data)
+        metrics = fair_model.evaluate(fair_dataset)
         print(f"Accuracy: {metrics['acc']:.4f}")
         print(f"AUC: {metrics['auc']:.4f}")
         print(f"F1 Score: {metrics['f1']:.4f}")
