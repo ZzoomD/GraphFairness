@@ -43,25 +43,33 @@ class FairGNN(Trainer):
     -------
     .. code-block:: python
 
-        from graphfairness.methods.inprocess.fairgnn import FairGNN
-        from graphfairness.models import GCN
-        import torch_geometric as pyg
+        from graphfairness.methods.inprocess.fairvgnn import FairVGNN
+        from graphfairness.data import FairDataset
+        from graphfairness.models import ModelBuilder
+        import torch
 
-        # load data
+        # Load data
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         dataset = FairDataset(root='./', name='german')
-        n_feat = dataset.data.features.shape[1]
-
-        # Initialize the GNN backbone
-        gnn_model = GCN(nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+        fair_dataset = dataset.data.to(device)
+        n_feat = fair_dataset.features.shape[1]
+        
+        # Build student model using ModelBuilder
+        model_builder = ModelBuilder(device)
+        model = model_builder.build(model_name='gcn',
+                                    nfeat=n_feat,
+                                    nclass=1,
+                                    nhid=[16],
+                                    dropout=0.5)
         
         # Create FairGNN instance
-        fair_model = FairGNN(gnn_model, nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+        fair_model = FairGNN(model, nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
         
         # Train the model
-        fair_model.train(data, epochs=200, validation=True, alpha=4, beta=0.01)
+        fair_model.train(fair_dataset, epochs=200, validation=True, alpha=4, beta=0.01)
         
         # Evaluate the model
-        metrics = fair_model.evaluate(data)
+        metrics = fair_model.evaluate(fair_dataset)
         print(f"Accuracy: {metrics['acc_val']:.4f}")
         print(f"AUC: {metrics['auc_val']:.4f}")
         print(f"Demographic Parity: {metrics['dp_val']:.4f}")
