@@ -6,3 +6,4 @@ from .model_utils import *
 from .channel_masker import *
 from .fairgp import *
 from .fugnn import *
+from .disgcn import *

@@ -32,25 +32,29 @@ GroupFairness is an open-source toolkit for fair graph deep learning. It provide
 ### Usage
 Get started with GNN training and evaluation in only five steps. Taking FairGNN as an example (refer to [Supported Algorithms](#supported-algorithms) for more fairness methods):
 ```python
+from graphfairness.datasets.fair_datasets import FairDataset
+from graphfairness.models import ModelBuilder
 from graphfairness.methods.inprocess.fairgnn import FairGNN
-from graphfairness.models import GCN
-import torch_geometric as pyg
 
 # Step1: load data
+device = torch.device('cuda' if args.cuda else 'cpu')
 dataset = FairDataset(root='./', name='german')
-n_feat = dataset.data.features.shape[1]
+fair_dataset = dataset.data
+fair_dataset = fair_dataset.to(device)
+nfeat = fair_dataset.features.shape[1]
 
 # Step2: Initialize the GNN backbone
-gnn_model = GCN(nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+model_builder = ModelBuilder(device=device)
+model = model_builder.build(model_name='gcn', nfeat=n_feat, nhid=[16], nclass=1, dropout=0.5)
 
 # Step3: Create the fairness method instance
-fair_model = FairGNN(gnn_model, nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
+fairgnn = FairGNN(model, nfeat=n_feat, nhid=[16], nclass=2, dropout=0.5)
 
 # Step4: Train the model
-fair_model.train(data, epochs=200, validation=True, alpha=4, beta=0.01)
+fairgnn.train(fair_dataset, epochs=1000, validation=True, alpha=4, beta=0.01)
 
 # Step5: Evaluate the model
-metrics = fair_model.evaluate(data)
+metrics = fairgnn.evaluate(fair_dataset)
 print(f"Accuracy: {metrics['acc_val']:.4f}")
 print(f"AUC: {metrics['auc_val']:.4f}")
 print(f"Demographic Parity: {metrics['dp_val']:.4f}")
@@ -75,6 +79,7 @@ GroupFairness supports the following algorithms which can be categorized into pr
 | FairSIN | [FairSIN: Achieving Fairness in Graph Neural Networks through Sensitive Information Neutralization](https://arxiv.org/pdf/2403.12474) | AAAI 2024 | In-processing |
 | FairGKD | [The Devil is in the Data: Learning Fair Graph Neural Networks via Partial Knowledge Distillation](https://arxiv.org/pdf/2311.17373) | WSDM 2024 | In-processing |
 | FairINV | [One Fits All: Learning Fair Graph Neural Networks for Various Sensitive Attributes](https://arxiv.org/pdf/2406.13544) | KDD 2024 | In-processing |
+| FairSAD | [Fair Graph Representation Learning via Sensitive Attribute Disentanglement](https://arxiv.org/pdf/2405.07011) | WWW 2024 | In-processing |
 | FairGB | [Rethinking Fair Graph Neural Networks from Re-balancing](https://arxiv.org/pdf/2407.11624) | KDD 2024 | In-processing |
 | FairGT | [FairGT: A Fairness-aware Graph Transformer](https://arxiv.org/pdf/2404.17169) | IJCAI 2024 | In-processing |
 | FUGNN | [FUGNN: Harmonizing Fairness and Utility in Graph Neural Networks](https://arxiv.org/pdf/2405.17034) | KDD 2024 | In-processing |
