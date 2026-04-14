@@ -7,6 +7,7 @@ import torch.optim as optim
 from .gcn import GCN
 from .sage import SAGE
 from .gin import GIN
+from .disgcn import DisGCN
 from typing import List
 import torch
 
@@ -18,6 +19,7 @@ name2model = {
     'gcn': GCN,
     'graphsage': SAGE,
     'gin': GIN,
+    'fairsad': DisGCN
 }
 
 class ModelBuilder:
@@ -64,7 +66,7 @@ class ModelBuilder:
         else:
             self.device = device
 
-    def build(self, model_name:str, nfeat:int, nclass: int=1, nhid:List[int]=[16], dropout: float=0.5) -> torch.nn.Module:
+    def build(self, model_name:str, nfeat:int, nclass: int=1, nhid:List[int]=[16], dropout: float=0.5, **model_args) -> torch.nn.Module:
         """Build and configure a graph neural network model based on the specified parameters.
         
         This method creates an instance of the specified model class, configures it with
@@ -82,6 +84,8 @@ class ModelBuilder:
             List of hidden layer dimensions, default is [16].
         dropout : float, optional
             Dropout probability, default is 0.5.
+        **model_args : dict
+            Additional model-specific parameters (e.g., channels=4 for DisGCN).
         
         Returns
         -------
@@ -103,6 +107,7 @@ class ModelBuilder:
                             nfeat=nfeat,
                             nhid=nhid,
                             nclass=nclass,
-                            dropout=dropout
+                            dropout=dropout,
+                            **model_args
                             )
         return model.to(self.device)

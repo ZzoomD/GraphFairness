@@ -7,7 +7,7 @@ from typing import List
 
 class GCN(nn.Module):
     def __init__(self, nfeat: int, nhid: List[int]=[16], 
-                 nclass: int=1, dropout: float=0.5):
+                 nclass: int=1, dropout: float=0.5, **model_args):
         super(GCN, self).__init__()
 
         in_channel = nfeat

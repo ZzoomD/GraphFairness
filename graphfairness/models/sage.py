@@ -5,7 +5,7 @@ from torch_geometric.nn import SAGEConv
 
 
 class SAGE(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout): 
+    def __init__(self, nfeat, nhid, nclass, dropout, **model_args): 
         super(SAGE, self).__init__()
         self.conv1 = SAGEConv(nfeat, nhid, normalize=True)
         self.conv1.aggr = 'mean'

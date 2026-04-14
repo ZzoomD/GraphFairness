@@ -5,7 +5,7 @@ from torch_geometric.nn import GINConv
 
 
 class GIN(nn.Module):
-    def __init__(self, nfeat, nhid, nclass, dropout): 
+    def __init__(self, nfeat, nhid, nclass, dropout, **model_args): 
         super(GIN, self).__init__()
 
         self.mlp1 = nn.Sequential(
