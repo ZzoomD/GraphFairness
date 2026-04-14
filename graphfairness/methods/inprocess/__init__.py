@@ -6,7 +6,7 @@ from .fairsin import FairSIN
 from .nifty import NIFTY
 from .fairgt import FairGT
 from .fairgp import FairGP
-from .fugnn import FUGNN
+from .fugnn import FairFUGNN
 from .cfc import CFC
 from .fairadj import FairAdj
 from .fairgb import FairGB
