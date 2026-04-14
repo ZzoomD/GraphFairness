@@ -8,7 +8,7 @@ warnings.filterwarnings('ignore')
 
 from graphfairness.datasets.fair_datasets import FairDataset
 from graphfairness.models.fugnn import FUGNN as FUGNNModel
-from graphfairness.methods.inprocess.fugnn import FairFUGNN 
+from graphfairness.methods.inprocess.fugnn import FUGNN 
 from graphfairness.utils import Results
 
 def args_parser():
@@ -83,10 +83,10 @@ def run(args):
     """
     Train model
     """
-    trainer = FairFUGNN(model, 
-                       lr=args.lr,
-                       weight_decay=args.weight_decay,
-                       k=args.k)
+    trainer = FUGNN(model, 
+                    lr=args.lr,
+                    weight_decay=args.weight_decay,
+                    k=args.k)
                        
     trainer.train(fair_dataset, args.epochs)
 
