@@ -89,4 +89,4 @@ GroupFairness supports the following algorithms which can be categorized into pr
 
 ## Get in Touch
 We welcome contributions! If you have any questions or would like to integrate your fairness algorithm into our framework, please contact us:
-- **Email**: [zhuych27@mail2.sysu.edu.cn](mailto:zhuych27@mail2.sysu.edu.cn)
+- **Email**: [yuchang199704@gmail.com](mailto:yuchang199704@gmail.com)
